@@ -1,0 +1,34 @@
+version: '2'
+volumes:
+  app_postgres:
+    external: true
+services:
+
+  backend: &base
+      command: python manage.py runserver 0.0.0.0:8000
+      build: .
+      depends_on:
+        - postgres
+      env_file:
+        - ./config.env
+      volumes:
+        - ./app/:/proj/
+      ports:
+        - "8000:8000"
+  # pre-migration is needed if you alter models.py in any app 
+  # pre-migration:
+  #     <<: *base
+  #     command: python manage.py makemigrations
+  #     ports: []
+  migrations:
+      <<: *base
+      command: python manage.py migrate --no-input
+      ports: []
+
+  postgres:
+      image: postgres:10
+      env_file:
+        - ./config.env
+      volumes:
+        - app_postgres:/var/lib/postgresql/data/
+
